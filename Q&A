@@ -1,0 +1,2 @@
+1. How did you prevent data leakage?"
+"Since this is financial time-series data, I didn't randomly shuffle the observations. I maintained chronological ordering and trained on historical observations before evaluating on later unseen observations."
