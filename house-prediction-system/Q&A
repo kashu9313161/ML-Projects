@@ -1,0 +1,36 @@
+1. Data ingestion => "How do I get the raw data into my system?"
+
+2. Data validation => "Is the data I received actually valid?"
+    Validation checks
+        Dataset
+        │
+        ├── Does file exist?              ✓
+        ├── Is dataset empty?             ✗
+        ├── Expected target exists?       ✓
+        ├── Expected columns exist?       ✓
+        ├── Duplicate rows?               ?
+        ├── Missing values?               ?
+        ├── Target valid?                 ?
+        └── Data types reasonable?        ?
+
+3.Preprocessing => "How do I transform this data so an ML model can use it?"
+
+4. How do we interpret skewness?
+    Skewness measures the asymmetry of a distribution.
+
+A rough practical rule:
+
+        Skewness	    Interpretation
+
+        ~0	            Approximately symmetric
+        0 to 0.5	    Low positive skew
+        0.5 to 1	    Moderate positive skew
+        > 1	            High positive skew
+        < -1	        High negative skew
+
+        between −0.5 and 0.5	~symmetric	no transform needed
+        between ±0.5 and ±1.0	moderately skewed	optional, test both
+        beyond ±1.0	            highly skewed	apply log1p
+
+These are rules of thumb, not strict mathematical thresholds.
+Here our result is: SalePrice Skewness = 1.7435 (means SalePrice is strongly right-skewed.)

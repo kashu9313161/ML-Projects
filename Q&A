@@ -1,2 +1,7 @@
 1. How did you prevent data leakage?"
 "Since this is financial time-series data, I didn't randomly shuffle the observations. I maintained chronological ordering and trained on historical observations before evaluating on later unseen observations."
+2. Your current experiment is actually producing a good portfolio-project story.
+
+You aren't claiming:"I built an AI stock predictor with 90% accuracy."
+
+Instead:"I developed a time-series forecasting pipeline, established naive and linear baselines, evaluated nonlinear ensemble models using chronological validation, and investigated whether additional model complexity produced robust out-of-sample predictive signal."
