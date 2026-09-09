@@ -5,7 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 
-def built_preprocessor(X):
+def build_preprocessor(X):
 
     # -------------------------
     # Identify numerical and categorical features
@@ -43,7 +43,7 @@ def built_preprocessor(X):
         ]
     )
 
-    return preprocessor
+    return preprocessor,numerical_features, categorical_features
 
 # print("\nNumber of numerical features:", len(numerical_features))
 # print("Numerical features:")
