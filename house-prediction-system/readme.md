@@ -626,3 +626,73 @@ SalePrice
 Everything else should be evaluated based on:
 
 Can this information legitimately help us predict SalePrice?
+
+
+2. Your worst predictions are actually useful
+
+Your largest errors include:
+
+Actual       Predicted       Error
+611,657      434,309        177,348
+582,933      444,502        138,431
+610,000      478,312        131,688
+184,750      278,160        -93,410
+401,179      489,845        -88,666
+
+This tells us something important about the model.
+
+For example:
+
+Actual $611,657 → predicted $434,309
+
+The model underestimated the house by ~$177k.
+
+Meanwhile:
+
+Actual $184,750 → predicted $278,160
+
+The model overestimated it by ~$93k.
+
+That's exactly the kind of analysis an ML engineer should perform after looking at a metric.
+
+You aren't just saying:
+
+"My R² is 0.9423."
+
+You're asking:
+
+"Where does my model fail, and why?"
+
+That's much better.
+
+
+Why this file is important
+
+This is the first time we're creating the actual production ML pipeline.
+
+Notice this:
+
+>pipeline = Pipeline(
+>    steps=[
+>        ("preprocessor", preprocessor),
+>        ("regressor", model)
+>    ]
+>)
+
+That means your saved model contains:
+
+                house_price_xgb.joblib
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+       Preprocessor              XGBoost
+             │                       │
+       ┌─────┴─────┐                 │
+       │           │                 │
+    Imputer      Encoder             │
+       │           │                 │
+       └─────┬─────┘                 │
+             │                       │
+             └──────────┬────────────┘
+                        │
+                   Prediction

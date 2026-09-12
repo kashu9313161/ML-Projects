@@ -1,0 +1,95 @@
+import requests
+import pandas as pd
+
+
+# Load one real house from the dataset
+df = pd.read_csv("data/raw/AmesHousing.csv")
+
+sample = df.drop(columns=["SalePrice"]).iloc[0].to_dict()
+
+# Convert pandas NaN values to JSON-compstible None
+sample = {
+    key: None if pd.isna(value) else value
+    for key, value in sample.items()
+}
+
+
+# Convert dataset column names to API field names
+api_data = {
+    key.replace(" ", "_")
+       .replace("1st_", "First_")
+       .replace("2nd_", "Second_")
+       .replace("3Ssn_", "ThreeSsn_")
+       .replace("/", "_")
+       .replace("-", "_"): value
+    for key, value in sample.items()
+}
+
+
+# Fix specific column names
+api_data["Year_Remod_Add"] = sample["Year Remod/Add"]
+api_data["First_Flr_SF"] = sample["1st Flr SF"]
+api_data["Second_Flr_SF"] = sample["2nd Flr SF"]
+api_data["Low_Qual_Fin_SF"] = sample["Low Qual Fin SF"]
+api_data["Gr_Liv_Area"] = sample["Gr Liv Area"]
+
+api_data["BsmtFin_Type_1"] = sample["BsmtFin Type 1"]
+api_data["BsmtFin_Type_2"] = sample["BsmtFin Type 2"]
+
+api_data["BsmtFin_SF_1"] = sample["BsmtFin SF 1"]
+api_data["BsmtFin_SF_2"] = sample["BsmtFin SF 2"]
+
+api_data["Total_Bsmt_SF"] = sample["Total Bsmt SF"]
+
+api_data["Bsmt_Full_Bath"] = sample["Bsmt Full Bath"]
+api_data["Bsmt_Half_Bath"] = sample["Bsmt Half Bath"]
+
+api_data["TotRms_AbvGrd"] = sample["TotRms AbvGrd"]
+
+api_data["Garage_Yr_Blt"] = sample["Garage Yr Blt"]
+
+api_data["Garage_Cars"] = sample["Garage Cars"]
+api_data["Garage_Area"] = sample["Garage Area"]
+
+api_data["Wood_Deck_SF"] = sample["Wood Deck SF"]
+api_data["Open_Porch_SF"] = sample["Open Porch SF"]
+api_data["Enclosed_Porch"] = sample["Enclosed Porch"]
+api_data["ThreeSsn_Porch"] = sample["3Ssn Porch"]
+api_data["Screen_Porch"] = sample["Screen Porch"]
+
+api_data["Pool_Area"] = sample["Pool Area"]
+api_data["Pool_QC"] = sample["Pool QC"]
+
+api_data["Misc_Feature"] = sample["Misc Feature"]
+api_data["Misc_Val"] = sample["Misc Val"]
+
+api_data["Mo_Sold"] = sample["Mo Sold"]
+api_data["Yr_Sold"] = sample["Yr Sold"]
+
+# Convert NaN values to None
+# and NumPy values to normal Python values
+api_data = {
+    key: (
+        None
+        if pd.isna(value)
+        else value.item()
+        if hasattr(value, "item")
+        else value
+    )
+    for key, value in api_data.items()
+}
+
+# Send request
+response = requests.post(
+    "http://127.0.0.1:8000/predict",
+    json=api_data
+)
+
+
+print("Status code:", response.status_code)
+print("Response:")
+
+if response.headers.get("content-type", "").startswith("application/json"):
+    print(response.json())
+else:
+    print(response.text)
