@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: house-prediction-system
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
