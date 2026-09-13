@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
+import joblib
+import numpy as np
 
-from src.predict import predict_price
 
+# --------------------------------
+# FastAPI application
+# --------------------------------
 
 app = FastAPI(
     title="House Price Prediction API",
@@ -12,278 +16,111 @@ app = FastAPI(
 )
 
 
-# --------------------------------------------------
-# Input Schema
-# --------------------------------------------------
+# --------------------------------
+# Load application model
+# --------------------------------
+
+MODEL_PATH = "models/house_price_app_xgb.joblib"
+
+model = joblib.load(MODEL_PATH)
+
+
+# --------------------------------
+# Input schema
+# --------------------------------
 
 class HouseInput(BaseModel):
 
-    # Property / Land
-    MS_SubClass: float
-    MS_Zoning: str
-    Lot_Frontage: float | None = None
-    Lot_Area: float
-    Street: str
-    Alley: str | None = None
-    Lot_Shape: str
-    Land_Contour: str
-    Utilities: str
-    Lot_Config: str
-    Land_Slope: str
+    overall_qual: int
+    overall_cond: int
 
-    # Location
-    Neighborhood: str
+    gr_liv_area: float
+    first_flr_sf: float
+    second_flr_sf: float
+    total_bsmt_sf: float
 
-    # Building
-    Condition_1: str
-    Condition_2: str
-    Bldg_Type: str
-    House_Style: str
+    garage_cars: float
+    garage_area: float
 
-    # Quality
-    Overall_Qual: int
-    Overall_Cond: int
+    full_bath: float
+    half_bath: float
 
-    # Age
-    Year_Built: int
-    Year_Remod_Add: int
+    bedroom_abvgr: int
+    tot_rms_abvgrd: int
 
-    # Exterior
-    Roof_Style: str
-    Roof_Matl: str
-    Exterior_1st: str
-    Exterior_2nd: str
-    Mas_Vnr_Type: str | None = None
-    Mas_Vnr_Area: float | None = None
-    Exter_Qual: str
-    Exter_Cond: str
-    Foundation: str
+    year_built: int
+    year_remod_add: int
 
-    # Basement
-    Bsmt_Qual: str | None = None
-    Bsmt_Cond: str | None = None
-    Bsmt_Exposure: str | None = None
-    BsmtFin_Type_1: str | None = None
-    BsmtFin_SF_1: float | None = None
-    BsmtFin_Type_2: str | None = None
-    BsmtFin_SF_2: float | None = None
-    Bsmt_Unf_SF: float | None = None
-    Total_Bsmt_SF: float | None = None
+    neighborhood: str
+    kitchen_qual: str
+    exter_qual: str
 
-    # Utilities / Heating
-    Heating: str
-    Heating_QC: str
-    Central_Air: str
-    Electrical: str
-
-    # Living Space
-    First_Flr_SF: float
-    Second_Flr_SF: float
-    Low_Qual_Fin_SF: float
-    Gr_Liv_Area: float
-
-    # Rooms
-    Bsmt_Full_Bath: float | None = None
-    Bsmt_Half_Bath: float | None = None
-    Full_Bath: float
-    Half_Bath: float
-    Bedroom_AbvGr: int
-    Kitchen_AbvGr: int
-    Kitchen_Qual: str
-    TotRms_AbvGrd: int
-
-    # Fireplace
-    Functional: str
-    Fireplaces: int
-    Fireplace_Qu: str | None = None
-
-    # Garage
-    Garage_Type: str | None = None
-    Garage_Yr_Blt: float | None = None
-    Garage_Finish: str | None = None
-    Garage_Cars: float | None = None
-    Garage_Area: float | None = None
-    Garage_Qual: str | None = None
-    Garage_Cond: str | None = None
-
-    # Outdoor
-    Paved_Drive: str
-    Wood_Deck_SF: float
-    Open_Porch_SF: float
-    Enclosed_Porch: float
-    ThreeSsn_Porch: float
-    Screen_Porch: float
-
-    # Amenities
-    Pool_Area: float
-    Pool_QC: str | None = None
-    Fence: str | None = None
-    Misc_Feature: str | None = None
-    Misc_Val: float
-
-    # Sale
-    Mo_Sold: int
-    Yr_Sold: int
-    Sale_Type: str
-    Sale_Condition: str
+    lot_area: float
+    fireplaces: int
 
 
-# --------------------------------------------------
-# Convert API names → Dataset names
-# --------------------------------------------------
-
-COLUMN_MAP = {
-    # Property / Land
-    "MS_SubClass": "MS SubClass",
-    "MS_Zoning": "MS Zoning",
-    "Lot_Frontage": "Lot Frontage",
-    "Lot_Area": "Lot Area",
-    "Street": "Street",
-    "Alley": "Alley",
-    "Lot_Shape": "Lot Shape",
-    "Land_Contour": "Land Contour",
-    "Utilities": "Utilities",
-    "Lot_Config": "Lot Config",
-    "Land_Slope": "Land Slope",
-
-    # Location
-    "Neighborhood": "Neighborhood",
-
-    # Building
-    "Condition_1": "Condition 1",
-    "Condition_2": "Condition 2",
-    "Bldg_Type": "Bldg Type",
-    "House_Style": "House Style",
-
-    # Quality
-    "Overall_Qual": "Overall Qual",
-    "Overall_Cond": "Overall Cond",
-
-    # Age
-    "Year_Built": "Year Built",
-    "Year_Remod_Add": "Year Remod/Add",
-
-    # Exterior
-    "Roof_Style": "Roof Style",
-    "Roof_Matl": "Roof Matl",
-    "Exterior_1st": "Exterior 1st",
-    "Exterior_2nd": "Exterior 2nd",
-    "Mas_Vnr_Type": "Mas Vnr Type",
-    "Mas_Vnr_Area": "Mas Vnr Area",
-    "Exter_Qual": "Exter Qual",
-    "Exter_Cond": "Exter Cond",
-    "Foundation": "Foundation",
-
-    # Basement
-    "Bsmt_Qual": "Bsmt Qual",
-    "Bsmt_Cond": "Bsmt Cond",
-    "Bsmt_Exposure": "Bsmt Exposure",
-    "BsmtFin_Type_1": "BsmtFin Type 1",
-    "BsmtFin_SF_1": "BsmtFin SF 1",
-    "BsmtFin_Type_2": "BsmtFin Type 2",
-    "BsmtFin_SF_2": "BsmtFin SF 2",
-    "Bsmt_Unf_SF": "Bsmt Unf SF",
-    "Total_Bsmt_SF": "Total Bsmt SF",
-
-    # Heating / Utilities
-    "Heating": "Heating",
-    "Heating_QC": "Heating QC",
-    "Central_Air": "Central Air",
-    "Electrical": "Electrical",
-
-    # Living Space
-    "First_Flr_SF": "1st Flr SF",
-    "Second_Flr_SF": "2nd Flr SF",
-    "Low_Qual_Fin_SF": "Low Qual Fin SF",
-    "Gr_Liv_Area": "Gr Liv Area",
-
-    # Rooms
-    "Bsmt_Full_Bath": "Bsmt Full Bath",
-    "Bsmt_Half_Bath": "Bsmt Half Bath",
-    "Full_Bath": "Full Bath",
-    "Half_Bath": "Half Bath",
-    "Bedroom_AbvGr": "Bedroom AbvGr",
-    "Kitchen_AbvGr": "Kitchen AbvGr",
-    "Kitchen_Qual": "Kitchen Qual",
-    "TotRms_AbvGrd": "TotRms AbvGrd",
-
-    # Functional / Fireplace
-    "Functional": "Functional",
-    "Fireplaces": "Fireplaces",
-    "Fireplace_Qu": "Fireplace Qu",
-
-    # Garage
-    "Garage_Type": "Garage Type",
-    "Garage_Yr_Blt": "Garage Yr Blt",
-    "Garage_Finish": "Garage Finish",
-    "Garage_Cars": "Garage Cars",
-    "Garage_Area": "Garage Area",
-    "Garage_Qual": "Garage Qual",
-    "Garage_Cond": "Garage Cond",
-
-    # Outdoor
-    "Paved_Drive": "Paved Drive",
-    "Wood_Deck_SF": "Wood Deck SF",
-    "Open_Porch_SF": "Open Porch SF",
-    "Enclosed_Porch": "Enclosed Porch",
-    "ThreeSsn_Porch": "3Ssn Porch",
-    "Screen_Porch": "Screen Porch",
-
-    # Amenities
-    "Pool_Area": "Pool Area",
-    "Pool_QC": "Pool QC",
-    "Fence": "Fence",
-    "Misc_Feature": "Misc Feature",
-    "Misc_Val": "Misc Val",
-
-    # Sale
-    "Mo_Sold": "Mo Sold",
-    "Yr_Sold": "Yr Sold",
-    "Sale_Type": "Sale Type",
-    "Sale_Condition": "Sale Condition",
-}
-
-
-# --------------------------------------------------
-# Health Check
-# --------------------------------------------------
+# --------------------------------
+# Health check
+# --------------------------------
 
 @app.get("/health")
 def health_check():
 
     return {
         "status": "healthy",
-        "model": "XGBoost"
+        "model": "XGBoost Application Model"
     }
 
 
-# --------------------------------------------------
-# Prediction Endpoint
-# --------------------------------------------------
+# --------------------------------
+# Prediction endpoint
+# --------------------------------
 
 @app.post("/predict")
 def predict(house: HouseInput):
 
-    # Pydantic → dictionary
     data = house.model_dump()
 
-    # API names → original dataset names
+    # Convert API names → dataset names
     data = {
-        COLUMN_MAP.get(key, key): value
-        for key, value in data.items()
+        "Overall Qual": data["overall_qual"],
+        "Overall Cond": data["overall_cond"],
+
+        "Gr Liv Area": data["gr_liv_area"],
+        "1st Flr SF": data["first_flr_sf"],
+        "2nd Flr SF": data["second_flr_sf"],
+        "Total Bsmt SF": data["total_bsmt_sf"],
+
+        "Garage Cars": data["garage_cars"],
+        "Garage Area": data["garage_area"],
+
+        "Full Bath": data["full_bath"],
+        "Half Bath": data["half_bath"],
+
+        "Bedroom AbvGr": data["bedroom_abvgr"],
+        "TotRms AbvGrd": data["tot_rms_abvgrd"],
+
+        "Year Built": data["year_built"],
+        "Year Remod/Add": data["year_remod_add"],
+
+        "Neighborhood": data["neighborhood"],
+        "Kitchen Qual": data["kitchen_qual"],
+        "Exter Qual": data["exter_qual"],
+
+        "Lot Area": data["lot_area"],
+        "Fireplaces": data["fireplaces"]
     }
 
-    # Dictionary → DataFrame
+    # Convert dictionary → DataFrame
     house_df = pd.DataFrame([data])
 
-    # # Validation input columns
-    # print("\nAPI input columns:")
-    # print(house_df.columns.tolist())
+    # Predict log(price)
+    prediction_log = model.predict(house_df)
 
-    # Prediction
-    predicted_price = predict_price(house_df)
+    # Convert log(price) → actual price
+    predicted_price = np.expm1(prediction_log[0])
 
     return {
-        "predicted_price": round(predicted_price, 2),
+        "predicted_price": round(float(predicted_price), 2),
         "currency": "USD"
     }

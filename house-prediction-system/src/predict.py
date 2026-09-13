@@ -32,9 +32,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src.feature_engineering import create_features
-
-MODEL_PATH = "models/house_price_xgb.joblib"
+MODEL_PATH = "models/house_price_app_xgb.joblib"
 
 def load_model():
     """Load the trained ML pipeline."""
@@ -45,11 +43,8 @@ model = load_model()
 
 def predict_price(house_data: pd.DataFrame) -> float:
     """
-    Predict house price for new house data.
+    Predict house price form application features.
     """
-
-    # Apply the same feature engineering used during training
-    house_data = create_features(house_data)
 
     # Make prediction in log scale
     prediction_log = model.predict(house_data)

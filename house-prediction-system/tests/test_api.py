@@ -10,4 +10,4 @@ def test_health():
     data = response.json()
 
     assert data["status"] == "healthy"
-    assert data["model"] == "XGBoost"
+    assert data["model"] == "XGBoost Application Model"

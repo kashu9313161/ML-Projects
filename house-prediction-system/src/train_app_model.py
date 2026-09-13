@@ -10,6 +10,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor
 
 from src.preprocessing import build_preprocessor
+from src.predict import predict_price
 
 
 DATA_PATH = "data/raw/AmesHousing.csv"
@@ -36,7 +37,8 @@ APP_FEATURES = [
     "Neighborhood",
     "Kitchen Qual",
     "Exter Qual",
-    "Lot Area"
+    "Lot Area",
+    "Fireplaces"
 ]
 
 
