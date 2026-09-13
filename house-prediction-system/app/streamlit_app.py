@@ -359,8 +359,8 @@ if st.button(
     }
 
     try:
-        # st.write("DEBUG PAYLOAD:")
-        # st.json(payload)    
+        API_URL = "http://backend:8000/predict"
+
         response = requests.post(
             API_URL,
             json=payload,
