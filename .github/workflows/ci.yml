@@ -34,3 +34,25 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -v
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        run: |
+          docker build \
+            -f house-prediction-system/Dockerfile.backend \
+            -t house-price-api:test \
+            house-prediction-system
+
+      - name: Build frontend Docker image
+        run: |
+          docker build \
+            -f house-prediction-system/Dockerfile.frontend \
+            -t house-price-frontend:test \
+            house-prediction-system
