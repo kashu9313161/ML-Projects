@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 
 
 # --------------------------------
@@ -359,7 +360,10 @@ if st.button(
     }
 
     try:
-        API_URL = "http://backend:8000/predict"
+        API_URL = os.getenv(
+            "API_URl",
+            "http://backend:8000/predict"
+        )
 
         response = requests.post(
             API_URL,
