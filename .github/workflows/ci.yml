@@ -46,7 +46,7 @@ jobs:
       - name: Build backend Docker image
         run: |
           docker build \
-            -f house-prediction-system/Dockerfile.backend \
+            -f house-prediction-system/Dockerfile \
             -t house-price-api:test \
             house-prediction-system
 
