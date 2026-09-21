@@ -11,10 +11,11 @@ COPY models/ ./models/
 
 EXPOSE 8000
 
-HEALTHCHECK --interval= --timeout=5s --start-period=10s --retries= \
-    CMD python -c "import urllib.request; urllib.requests.urlopen('http://localhost:8000/health')" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD sh -c 'python -c "import urllib.request, os; urllib.request.urlopen(\"http://localhost:${PORT:-8000}/health\")"' || exit 1
 
-CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn src.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
 
 # FROM python:3.13-slim => Creates a lightweight Python environment inside the container.
 # WORKDIR /app => Makes /app the working directory.
