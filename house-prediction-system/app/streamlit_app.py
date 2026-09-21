@@ -361,7 +361,7 @@ if st.button(
 
     try:
         API_URL = os.getenv(
-            "API_URl",
+            "API_URL",
             "http://backend:8000/predict"
         )
 
