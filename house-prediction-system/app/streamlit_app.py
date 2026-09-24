@@ -73,7 +73,7 @@ with col2:
         value=5,
         help="Overall condition of the house."
     )
-
+  
 
 # =================================
 # Property Size
